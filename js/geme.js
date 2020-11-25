@@ -1,36 +1,9 @@
 const canvas = document.querySelector("canvas");
 const c = canvas.getContext("2d");
 
-const playerImg = new Image();
-playerImg.src = "../data/PNG/playerShip1_blue.png";
-const playerLaserImg = new Image();
-playerLaserImg.src = "../data/PNG/Lasers/laserBlue01.png";
-const healthIcon = new Image();
-healthIcon.src = "../data/PNG/UI/playerLife1_blue.png";
-const enemyLaserImg = new Image();
-enemyLaserImg.src = "../data/PNG/Lasers/laserPurple01.png";
-const numeral0 = new Image();
-numeral0.src = "../data/PNG/UI/numeral0.png";
-const numeral1 = new Image();
-numeral1.src = "../data/PNG/UI/numeral1.png";
-const numeral2 = new Image();
-numeral2.src = "../data/PNG/UI/numeral2.png";
-const numeral3 = new Image();
-numeral3.src = "../data/PNG/UI/numeral3.png";
-const numeral4 = new Image();
-numeral4.src = "../data/PNG/UI/numeral4.png";
-const numeral5 = new Image();
-numeral5.src = "../data/PNG/UI/numeral5.png";
-const numeral6 = new Image();
-numeral6.src = "../data/PNG/UI/numeral6.png";
-const numeral7 = new Image();
-numeral7.src = "../data/PNG/UI/numeral7.png";
-const numeral8 = new Image();
-numeral8.src = "../data/PNG/UI/numeral8.png";
-const numeral9 = new Image();
-numeral9.src = "../data/PNG/UI/numeral9.png";
-
+let START = false;
 let LEVEL = 1;
+let SCORE = 0;
 
 //PLAYER
 const PLAYER_STATE = {
@@ -38,22 +11,25 @@ const PLAYER_STATE = {
   playerY: 500,
   playerSize: 60,
   playerSpeed: 8,
-  // laserVelocity: 10,
+  laserVelocity: 5,
+  shield: 0,
 };
 let HEALTH = 3;
+let POWERUP_COOLDOWN = false;
+let POWERUP_ARR = [];
 
-let SCORE = 0;
 let LEFT = false,
   RIGHT = false,
   UP = false,
   DOWN = false,
   SHOOT = false;
-var keyAllowed = {};
+let keyAllowed = {};
 
 //ENEMY
-let meteors = [];
-let enemies = [];
+let ENEMIES_ARR = [];
 let COOLDOWN = false;
+//METEORS
+let METEORS_ARR = [];
 
 //Key event------------------------------------------------------
 document.onkeydown = (e) => {
@@ -64,7 +40,6 @@ document.onkeydown = (e) => {
   else if (e.keyCode == 32) {
     if (keyAllowed[e.which] === false) return;
     keyAllowed[e.which] = false;
-    // code to be executed goes here
     SHOOT = true;
   }
 };
@@ -75,6 +50,9 @@ document.onkeyup = (e) => {
   if (e.keyCode == 40) DOWN = false;
   if (e.keyCode == 32) {
     keyAllowed[e.which] = true;
+  } else if (e.keyCode == 13) {
+    START = true;
+    console.log(START);
   }
 };
 
@@ -82,6 +60,7 @@ document.onfocus = (e) => {
   if (e.keyCode == 32) keyAllowed = {};
 };
 
+//Distance between two objects------------------------------------------------------
 const distance = (x1, y1, s1, x2, y2, s2) => {
   if (x1 + s1 >= x2 && x1 <= x2 + s2 && y1 + s1 >= y2 && y1 <= y2 + s2) {
     return true;
@@ -99,6 +78,15 @@ class Player {
 
   draw() {
     c.beginPath();
+    if (PLAYER_STATE.shield) {
+      c.drawImage(
+        shield,
+        this.x - 25,
+        this.y - 30,
+        this.size + 50,
+        this.size + 50
+      );
+    }
     c.drawImage(playerImg, this.x, this.y, this.size, this.size);
   }
 
@@ -127,7 +115,8 @@ class Player {
       const playerLaser = new PlayerLaser(
         this.x - 5 + this.size / 2,
         this.y,
-        10
+        10,
+        PLAYER_STATE.laserVelocity
       );
       this.bullets.push(playerLaser);
       setTimeout(() => {
@@ -165,8 +154,8 @@ class PlayerLaser {
     c.drawImage(playerLaserImg, this.x, this.y, this.size, 40);
   }
   update() {
-    this.y -= 5;
-    enemies.forEach((enemy, i) => {
+    this.y -= this.velocity;
+    ENEMIES_ARR.forEach((enemy, i) => {
       player.bullets.forEach((laser) => {
         if (
           distance(
@@ -179,7 +168,7 @@ class PlayerLaser {
           ) &&
           enemy.dy === enemy.y
         ) {
-          enemies.splice(i, 1);
+          ENEMIES_ARR.splice(i, 1);
           player.bullets.splice(player.bullets.indexOf(laser), 1);
           SCORE += 100;
         }
@@ -200,7 +189,7 @@ class Enemy {
     this.speed = speed;
     this.img = img;
     this.enemyBullets = [];
-    this.randomizeShooting = [];
+    this.randomizeShooting;
   }
   draw() {
     c.beginPath();
@@ -216,18 +205,11 @@ class Enemy {
     if (this.y === this.dy) {
       this.x -= this.speed;
     }
-
-    let RANDOM_BOOL = Math.random() <= 0.8;
-    this.randomizeShooting.push(RANDOM_BOOL);
-
+    this.randomizeShooting = Math.random() <= 0.8;
     this.draw();
   }
   shoot() {
-    if (
-      COOLDOWN &&
-      this.randomizeShooting[this.randomizeShooting.length - 1] &&
-      this.y === this.dy
-    ) {
+    if (COOLDOWN && this.randomizeShooting && this.y === this.dy) {
       const enemyLaser = new EnemyLaser(
         this.x - 5 + this.size / 2,
         this.y,
@@ -261,7 +243,7 @@ class EnemyLaser {
   }
   update() {
     this.y = this.y + 5;
-    enemies.forEach((enemy) => {
+    ENEMIES_ARR.forEach((enemy) => {
       enemy.enemyBullets.forEach((bullet) => {
         if (
           distance(
@@ -272,10 +254,13 @@ class EnemyLaser {
             player.y,
             player.size
           )
-          // bullet.y === player.y &&
         ) {
           enemy.enemyBullets.splice(enemy.enemyBullets.indexOf(bullet), 1);
-          HEALTH--;
+          if (!PLAYER_STATE.shield) {
+            HEALTH--;
+          } else {
+            PLAYER_STATE.shield--;
+          }
         }
       });
     });
@@ -285,25 +270,29 @@ class EnemyLaser {
 
 //Meteor------------------------------------------------------
 class Meteor {
-  constructor(x, y, size, img) {
+  constructor(x, y, size) {
     this.x = x;
     this.y = -y;
     this.size = size;
-    this.img = meteorsArr[Math.floor(Math.random() * meteorsArr.length)];
+    this.img = meteorsImgArr[Math.floor(Math.random() * meteorsImgArr.length)];
   }
   draw() {
     c.beginPath();
     c.drawImage(this.img, this.x, this.y, this.size, this.size);
   }
   update() {
-    for (let i = meteors.length - 1; i >= 0; i--) {
-      let mtr = meteors[i];
+    for (let i = METEORS_ARR.length - 1; i >= 0; i--) {
+      let mtr = METEORS_ARR[i];
       if (mtr.y > canvas.height) {
-        meteors.splice(i, 1);
+        METEORS_ARR.splice(i, 1);
       }
       if (distance(mtr.x, mtr.y, mtr.size, player.x, player.y, player.size)) {
-        HEALTH--;
-        meteors.splice(i, 1);
+        if (!PLAYER_STATE.shield) {
+          HEALTH--;
+        } else {
+          PLAYER_STATE.shield--;
+        }
+        METEORS_ARR.splice(i, 1);
       }
     }
 
@@ -312,122 +301,43 @@ class Meteor {
   }
 }
 
-//LevelChanging------------------------------------------------------
-setInterval(() => {
-  if (enemies.length === 0 && LEVEL === 1) {
-    lvlOne.forEach((lvl) => {
-      const enemy = new Enemy(
-        lvl.x,
-        lvl.y,
-        PLAYER_STATE.playerSize,
-        2,
-        lvl.img
-      );
-      enemies.push(enemy);
-    });
-
-    LEVEL = 2;
-  } else if (enemies.length === 0 && LEVEL === 2) {
-    for (let i = 0; i < 15; i++) {
-      let size = Math.floor(Math.random() * 60) + 20;
-      let x = Math.floor(Math.random() * canvas.width - size) + size;
-      let y = Math.floor(Math.random() * canvas.height - size) + size;
-      // if (meteors.length >= 1) {
-      //   for (let j = 0; j < meteors.length; j++) {
-      //     if (
-      //       distance(x, y, size, meteors[j].x, meteors[j].y, meteors[j].size)
-      //     ) {
-      //       x = Math.floor(Math.random() * canvas.width - size) + size;
-      //       y = Math.floor(Math.random() * canvas.height - size) + size;
-      //       console.log(123);
-      //       j--;
-      //     }
-      //   }
-      // }
-      meteors.push(new Meteor(x, y, size));
-    }
-
-    LEVEL = 3;
-  } else if (meteors.length === 0 && LEVEL === 3) {
-    lvlThree.forEach((lvl) => {
-      const enemy = new Enemy(
-        lvl.x,
-        lvl.y,
-        PLAYER_STATE.playerSize,
-        2,
-        lvl.img
-      );
-      enemies.push(enemy);
-    });
-
-    LEVEL = 4;
-  } else if (enemies.length === 0 && LEVEL === 4) {
-    for (let i = 0; i < 30; i++) {
-      let size = Math.floor(Math.random() * 60) + 20;
-      let x = Math.floor(Math.random() * canvas.width - size) + size;
-      let y = Math.floor(Math.random() * canvas.height - size) + size;
-      meteors.push(new Meteor(x, y, size));
-    }
-
-    LEVEL = 5;
-  } else if (meteors.length === 0 && LEVEL === 5) {
-    lvlFive.forEach((lvl) => {
-      const enemy = new Enemy(
-        lvl.x,
-        lvl.y,
-        PLAYER_STATE.playerSize,
-        2,
-        lvl.img
-      );
-      enemies.push(enemy);
-    });
-    LEVEL = 6;
-  } else if (enemies.length === 0 && LEVEL === 6) {
-    for (let i = 0; i < 30; i++) {
-      let size = Math.floor(Math.random() * 60) + 20;
-      let x = Math.floor(Math.random() * canvas.width - size) + size;
-      let y = Math.floor(Math.random() * canvas.height - size) + size;
-      meteors.push(new Meteor(x, y, size));
-    }
-    LEVEL = 7;
-  } else if (meteors.length === 0 && LEVEL === 7) {
-    lvlSeven.forEach((lvl) => {
-      const enemy = new Enemy(
-        lvl.x,
-        lvl.y,
-        PLAYER_STATE.playerSize,
-        2,
-        lvl.img
-      );
-      enemies.push(enemy);
-    });
-    LEVEL = 8;
-  } else if (enemies.length === 0 && LEVEL === 8) {
-    for (let i = 0; i < 30; i++) {
-      let size = Math.floor(Math.random() * 60) + 20;
-      let x = Math.floor(Math.random() * canvas.width - size) + size;
-      let y = Math.floor(Math.random() * canvas.height - size) + size;
-      meteors.push(new Meteor(x, y, size));
-    }
-    LEVEL = 9;
-  } else if (meteors.length === 0 && LEVEL === 9) {
-    lvlNine.forEach((lvl) => {
-      const enemy = new Enemy(
-        lvl.x,
-        lvl.y,
-        PLAYER_STATE.playerSize,
-        2,
-        lvl.img
-      );
-      enemies.push(enemy);
-    });
-    LEVEL = 10;
-  } else if (enemies.length === 0 && LEVEL === 10) {
-    HEALTH = 0;
+//PowerUps------------------------------------------------------
+class PowerUp {
+  constructor() {
+    this.x = Math.round(Math.random() * (canvas.width - 30 - 40)) + 30 + 40;
+    this.y = -Math.round(Math.random() * canvas.height);
+    this.type = Math.round(Math.random() * 2);
   }
-});
+  draw() {
+    c.beginPath();
+    c.drawImage(powerImgArr[this.type], this.x, this.y, 40, 40);
+  }
+  update() {
+    this.y += 5;
+    for (let i = POWERUP_ARR.length - 1; i >= 0; i--) {
+      let pw = POWERUP_ARR[i];
+      if (pw.y > canvas.height) {
+        POWERUP_ARR.splice(i, 1);
+        POWERUP_COOLDOWN = false;
+      }
+      if (distance(pw.x, pw.y, 40, player.x, player.y, player.size)) {
+        POWERUP_ARR.splice(i, 1);
+        if (pw.type === 0) {
+          SCORE += 500;
+        } else if (pw.type === 1) {
+          PLAYER_STATE.shield += 3;
+        } else if (pw.type === 2) {
+          PLAYER_STATE.laserVelocity += 2;
+        }
+      }
+
+      this.draw();
+    }
+  }
+}
 
 //Gui------------------------------------------------------
+
 class Game {
   constructor() {
     this.x = 60;
@@ -440,18 +350,21 @@ class Game {
         c.drawImage(healthIcon, this.x - 20, this.y, 20, 20);
         c.drawImage(healthIcon, this.x - 20 + 25, this.y, 20, 20);
         c.drawImage(healthIcon, this.x - 20 + 50, this.y, 20, 20);
+        if (PLAYER_STATE.shield) {
+          c.drawImage(shieldIcon, this.x - 20 + 75, this.y, 20, 20);
+        }
         break;
       case 2:
-        c.drawImage(healthIcon, this.x, this.y, 20, 20);
-        c.drawImage(healthIcon, this.x + 25, this.y, 20, 20);
+        c.drawImage(healthIcon, this.x - 20, this.y, 20, 20);
+        c.drawImage(healthIcon, this.x - 20 + 25, this.y, 20, 20);
         break;
       case 1:
-        c.drawImage(healthIcon, this.x, this.y, 20, 20);
+        c.drawImage(healthIcon, this.x - 20, this.y, 20, 20);
         break;
     }
   }
   level() {
-    c.font = "20px Arial";
+    c.font = "20px Roboto";
     c.textAlign = "center";
     c.fillStyle = "white";
     c.fillText(`Level: ${LEVEL - 1}`, canvas.width / 2, this.y + 15);
@@ -532,51 +445,185 @@ class Game {
     }
   }
 
-  gameover() {
+  gameover(text) {
     c.clearRect(0, 0, innerWidth, innerHeight);
-    c.font = "100px Arial";
+
+    c.font = `100px Roboto`;
     c.textAlign = "center";
     c.fillStyle = "white";
-    c.fillText("Game Over", canvas.width / 2, canvas.height / 2);
-    c.font = "45px Arial";
+    c.fillText(text, canvas.width / 2, canvas.height / 2);
+    c.font = "45px Roboto";
     c.textAlign = "center";
     c.fillStyle = "white";
     c.fillText(`Score: ${SCORE}`, canvas.width / 2, canvas.height / 2 + 75);
+    var para = document.createElement("p");
+    var node = document.createTextNode("This is new.");
+    para.appendChild(node);
+    canvas.appendChild(para);
   }
 }
 const game = new Game();
 
-//Animate------------------------------------------------------
-function animateGame() {
-  if (HEALTH > 0) {
-    requestAnimationFrame(animateGame);
-    c.clearRect(0, 0, innerWidth, innerHeight);
-    game.health();
-    game.score();
-    game.level();
-    player.update();
-    player.shoot();
-    enemies.forEach((e) => {
-      e.update();
-      e.shoot();
+//LevelChanging------------------------------------------------------
+const changeLevel = () => {
+  if (ENEMIES_ARR.length === 0 && LEVEL === 1) {
+    lvlOne.forEach((lvl) => {
+      const enemy = new Enemy(
+        lvl.x,
+        lvl.y,
+        PLAYER_STATE.playerSize,
+        2,
+        lvl.img
+      );
+      ENEMIES_ARR.push(enemy);
     });
-    meteors.forEach((e) => {
-      e.update();
+
+    LEVEL++;
+  } else if (ENEMIES_ARR.length === 0 && LEVEL === 2) {
+    for (let i = 0; i < 15; i++) {
+      let size = Math.floor(Math.random() * 60) + 20;
+      let x = Math.floor(Math.random() * canvas.width - size) + size;
+      let y = Math.floor(Math.random() * canvas.height - size) + size;
+      METEORS_ARR.push(new Meteor(x, y, size));
+    }
+
+    LEVEL++;
+  } else if (METEORS_ARR.length === 0 && LEVEL === 3) {
+    lvlThree.forEach((lvl) => {
+      const enemy = new Enemy(
+        lvl.x,
+        lvl.y,
+        PLAYER_STATE.playerSize,
+        2,
+        lvl.img
+      );
+      ENEMIES_ARR.push(enemy);
     });
-  } else {
-    game.gameover();
+
+    LEVEL++;
+  } else if (ENEMIES_ARR.length === 0 && LEVEL === 4) {
+    for (let i = 0; i < 20; i++) {
+      let size = Math.floor(Math.random() * 60) + 20;
+      let x = Math.floor(Math.random() * canvas.width - size) + size;
+      let y = Math.floor(Math.random() * canvas.height - size) + size;
+      METEORS_ARR.push(new Meteor(x, y, size));
+    }
+
+    LEVEL++;
+  } else if (METEORS_ARR.length === 0 && LEVEL === 5) {
+    lvlFive.forEach((lvl) => {
+      const enemy = new Enemy(
+        lvl.x,
+        lvl.y,
+        PLAYER_STATE.playerSize,
+        2,
+        lvl.img
+      );
+      ENEMIES_ARR.push(enemy);
+    });
+
+    LEVEL++;
+  } else if (ENEMIES_ARR.length === 0 && LEVEL === 6) {
+    for (let i = 0; i < 25; i++) {
+      let size = Math.floor(Math.random() * 60) + 20;
+      let x = Math.floor(Math.random() * canvas.width - size) + size;
+      let y = Math.floor(Math.random() * canvas.height - size) + size;
+      METEORS_ARR.push(new Meteor(x, y, size));
+    }
+
+    LEVEL++;
+  } else if (METEORS_ARR.length === 0 && LEVEL === 7) {
+    lvlSeven.forEach((lvl) => {
+      const enemy = new Enemy(
+        lvl.x,
+        lvl.y,
+        PLAYER_STATE.playerSize,
+        2,
+        lvl.img
+      );
+      ENEMIES_ARR.push(enemy);
+    });
+
+    LEVEL++;
+  } else if (ENEMIES_ARR.length === 0 && LEVEL === 8) {
+    for (let i = 0; i < 30; i++) {
+      let size = Math.floor(Math.random() * 60) + 20;
+      let x = Math.floor(Math.random() * canvas.width - size) + size;
+      let y = Math.floor(Math.random() * canvas.height - size) + size;
+      METEORS_ARR.push(new Meteor(x, y, size));
+    }
+
+    LEVEL++;
+  } else if (METEORS_ARR.length === 0 && LEVEL === 9) {
+    lvlNine.forEach((lvl) => {
+      const enemy = new Enemy(
+        lvl.x,
+        lvl.y,
+        PLAYER_STATE.playerSize,
+        2,
+        lvl.img
+      );
+      ENEMIES_ARR.push(enemy);
+    });
+
+    LEVEL++;
+  } else if (ENEMIES_ARR.length === 0 && LEVEL === 10) {
+    for (let i = 0; i < 30; i++) {
+      let size = Math.floor(Math.random() * 60) + 20;
+      let x = Math.floor(Math.random() * canvas.width - size) + size;
+      let y = Math.floor(Math.random() * canvas.height - size) + size;
+      METEORS_ARR.push(new Meteor(x, y, size));
+    }
+    LEVEL++;
   }
-}
+};
+
+//Cooldown
+setInterval(() => {
+  if (!POWERUP_COOLDOWN) {
+    POWERUP_COOLDOWN = Math.random() <= 0.8;
+  } else {
+    POWERUP_ARR.push(new PowerUp());
+  }
+}, 2000);
 
 setInterval(() => {
   COOLDOWN = true;
   if (COOLDOWN) {
     setTimeout(() => {
       COOLDOWN = false;
-      console.log(COOLDOWN);
     }, 10);
   }
 }, 500);
 
-//KIEDY ZA SZYBKO SIĘ RUSZYSZ TO BUG
+//Animate------------------------------------------------------
+function animateGame() {
+  if (HEALTH > 0) {
+    requestAnimationFrame(animateGame);
+    console.log(START);
+    c.clearRect(0, 0, innerWidth, innerHeight);
+    game.health();
+    game.score();
+    game.level();
+    player.update();
+    player.shoot();
+    POWERUP_ARR.forEach((e) => {
+      e.update();
+    });
+    ENEMIES_ARR.forEach((e) => {
+      e.update();
+      e.shoot();
+    });
+    METEORS_ARR.forEach((e) => {
+      e.update();
+    });
+    if (LEVEL > 10 && METEORS_ARR.length === 0) {
+      game.gameover("You Won");
+    }
+  } else if (HEALTH === 0) {
+    game.gameover("You Died");
+  }
+  changeLevel();
+}
+
 animateGame();
