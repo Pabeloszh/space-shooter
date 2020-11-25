@@ -51,7 +51,7 @@ let LEFT = false,
 var keyAllowed = {};
 
 //ENEMY
-
+let meteors = [];
 let enemies = [];
 let COOLDOWN = false;
 
@@ -80,6 +80,12 @@ document.onkeyup = (e) => {
 
 document.onfocus = (e) => {
   if (e.keyCode == 32) keyAllowed = {};
+};
+
+const distance = (x1, y1, s1, x2, y2, s2) => {
+  if (x1 + s1 >= x2 && x1 <= x2 + s2 && y1 + s1 >= y2 && y1 <= y2 + s2) {
+    return true;
+  }
 };
 
 //Player------------------------------------------------------
@@ -163,10 +169,14 @@ class PlayerLaser {
     enemies.forEach((enemy, i) => {
       player.bullets.forEach((laser) => {
         if (
-          laser.x > enemy.x &&
-          laser.x < enemy.x + enemy.size &&
-          laser.y <= enemy.dy + enemy.size &&
-          laser.y > enemy.size &&
+          distance(
+            laser.x,
+            laser.y,
+            laser.size,
+            enemy.x,
+            enemy.y,
+            enemy.size
+          ) &&
           enemy.dy === enemy.y
         ) {
           enemies.splice(i, 1);
@@ -207,7 +217,7 @@ class Enemy {
       this.x -= this.speed;
     }
 
-    let RANDOM_BOOL = Math.random() <= 0.5;
+    let RANDOM_BOOL = Math.random() <= 0.8;
     this.randomizeShooting.push(RANDOM_BOOL);
 
     this.draw();
@@ -254,11 +264,15 @@ class EnemyLaser {
     enemies.forEach((enemy) => {
       enemy.enemyBullets.forEach((bullet) => {
         if (
+          distance(
+            bullet.x,
+            bullet.y,
+            bullet.size,
+            player.x,
+            player.y,
+            player.size
+          )
           // bullet.y === player.y &&
-          bullet.y >= player.y &&
-          bullet.y <= player.y + player.size &&
-          bullet.x > player.x &&
-          bullet.x < player.x + player.size
         ) {
           enemy.enemyBullets.splice(enemy.enemyBullets.indexOf(bullet), 1);
           HEALTH--;
@@ -269,25 +283,34 @@ class EnemyLaser {
   }
 }
 
-
-
-//Meteors------------------------------------------------------
-class Meteors {
-  constructor(x, y, size, velocity) {
+//Meteor------------------------------------------------------
+class Meteor {
+  constructor(x, y, size, img) {
     this.x = x;
-    this.y = y;
+    this.y = -y;
     this.size = size;
-    this.velocity = velocity;
-    draw(){
+    this.img = meteorsArr[Math.floor(Math.random() * meteorsArr.length)];
+  }
+  draw() {
+    c.beginPath();
+    c.drawImage(this.img, this.x, this.y, this.size, this.size);
+  }
+  update() {
+    for (let i = meteors.length - 1; i >= 0; i--) {
+      let mtr = meteors[i];
+      if (mtr.y > canvas.height) {
+        meteors.splice(i, 1);
+      }
+      if (distance(mtr.x, mtr.y, mtr.size, player.x, player.y, player.size)) {
+        HEALTH--;
+        meteors.splice(i, 1);
+      }
+    }
 
-    }
-    update(){
-      this.draw()
-    }
+    this.y += 2;
+    this.draw();
   }
 }
-
-
 
 //LevelChanging------------------------------------------------------
 setInterval(() => {
@@ -302,9 +325,31 @@ setInterval(() => {
       );
       enemies.push(enemy);
     });
+
     LEVEL = 2;
   } else if (enemies.length === 0 && LEVEL === 2) {
-    lvlTwo.forEach((lvl) => {
+    for (let i = 0; i < 15; i++) {
+      let size = Math.floor(Math.random() * 60) + 20;
+      let x = Math.floor(Math.random() * canvas.width - size) + size;
+      let y = Math.floor(Math.random() * canvas.height - size) + size;
+      // if (meteors.length >= 1) {
+      //   for (let j = 0; j < meteors.length; j++) {
+      //     if (
+      //       distance(x, y, size, meteors[j].x, meteors[j].y, meteors[j].size)
+      //     ) {
+      //       x = Math.floor(Math.random() * canvas.width - size) + size;
+      //       y = Math.floor(Math.random() * canvas.height - size) + size;
+      //       console.log(123);
+      //       j--;
+      //     }
+      //   }
+      // }
+      meteors.push(new Meteor(x, y, size));
+    }
+
+    LEVEL = 3;
+  } else if (meteors.length === 0 && LEVEL === 3) {
+    lvlThree.forEach((lvl) => {
       const enemy = new Enemy(
         lvl.x,
         lvl.y,
@@ -314,9 +359,73 @@ setInterval(() => {
       );
       enemies.push(enemy);
     });
-    LEVEL = 3;
+
+    LEVEL = 4;
+  } else if (enemies.length === 0 && LEVEL === 4) {
+    for (let i = 0; i < 30; i++) {
+      let size = Math.floor(Math.random() * 60) + 20;
+      let x = Math.floor(Math.random() * canvas.width - size) + size;
+      let y = Math.floor(Math.random() * canvas.height - size) + size;
+      meteors.push(new Meteor(x, y, size));
+    }
+
+    LEVEL = 5;
+  } else if (meteors.length === 0 && LEVEL === 5) {
+    lvlFive.forEach((lvl) => {
+      const enemy = new Enemy(
+        lvl.x,
+        lvl.y,
+        PLAYER_STATE.playerSize,
+        2,
+        lvl.img
+      );
+      enemies.push(enemy);
+    });
+    LEVEL = 6;
+  } else if (enemies.length === 0 && LEVEL === 6) {
+    for (let i = 0; i < 30; i++) {
+      let size = Math.floor(Math.random() * 60) + 20;
+      let x = Math.floor(Math.random() * canvas.width - size) + size;
+      let y = Math.floor(Math.random() * canvas.height - size) + size;
+      meteors.push(new Meteor(x, y, size));
+    }
+    LEVEL = 7;
+  } else if (meteors.length === 0 && LEVEL === 7) {
+    lvlSeven.forEach((lvl) => {
+      const enemy = new Enemy(
+        lvl.x,
+        lvl.y,
+        PLAYER_STATE.playerSize,
+        2,
+        lvl.img
+      );
+      enemies.push(enemy);
+    });
+    LEVEL = 8;
+  } else if (enemies.length === 0 && LEVEL === 8) {
+    for (let i = 0; i < 30; i++) {
+      let size = Math.floor(Math.random() * 60) + 20;
+      let x = Math.floor(Math.random() * canvas.width - size) + size;
+      let y = Math.floor(Math.random() * canvas.height - size) + size;
+      meteors.push(new Meteor(x, y, size));
+    }
+    LEVEL = 9;
+  } else if (meteors.length === 0 && LEVEL === 9) {
+    lvlNine.forEach((lvl) => {
+      const enemy = new Enemy(
+        lvl.x,
+        lvl.y,
+        PLAYER_STATE.playerSize,
+        2,
+        lvl.img
+      );
+      enemies.push(enemy);
+    });
+    LEVEL = 10;
+  } else if (enemies.length === 0 && LEVEL === 10) {
+    HEALTH = 0;
   }
-}, 2000);
+});
 
 //Gui------------------------------------------------------
 class Game {
@@ -328,9 +437,9 @@ class Game {
     c.beginPath();
     switch (HEALTH) {
       case 3:
-        c.drawImage(healthIcon, this.x, this.y, 20, 20);
-        c.drawImage(healthIcon, this.x + 25, this.y, 20, 20);
-        c.drawImage(healthIcon, this.x + 50, this.y, 20, 20);
+        c.drawImage(healthIcon, this.x - 20, this.y, 20, 20);
+        c.drawImage(healthIcon, this.x - 20 + 25, this.y, 20, 20);
+        c.drawImage(healthIcon, this.x - 20 + 50, this.y, 20, 20);
         break;
       case 2:
         c.drawImage(healthIcon, this.x, this.y, 20, 20);
@@ -451,6 +560,9 @@ function animateGame() {
       e.update();
       e.shoot();
     });
+    meteors.forEach((e) => {
+      e.update();
+    });
   } else {
     game.gameover();
   }
@@ -461,6 +573,7 @@ setInterval(() => {
   if (COOLDOWN) {
     setTimeout(() => {
       COOLDOWN = false;
+      console.log(COOLDOWN);
     }, 10);
   }
 }, 500);
