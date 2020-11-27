@@ -32,7 +32,7 @@ let COOLDOWN = false;
 let METEORS_ARR = [];
 
 //Key event------------------------------------------------------
-document.onkeydown = (e) => {
+onkeydown = (e) => {
   if (e.keyCode == 37) LEFT = true;
   else if (e.keyCode == 39) RIGHT = true;
   else if (e.keyCode == 38) UP = true;
@@ -41,19 +41,19 @@ document.onkeydown = (e) => {
     if (keyAllowed[e.which] === false) return;
     keyAllowed[e.which] = false;
     SHOOT = true;
-  }
+  } else if (e.keyCode == 13 && !START) startGame();
+  else if (
+    e.keyCode == 13 &&
+    ((!LEVEL && METEORS_ARR.length === 0) || HEALTH === 0)
+  )
+    window.location.reload(true);
 };
-document.onkeyup = (e) => {
+onkeyup = (e) => {
   if (e.keyCode == 37) LEFT = false;
-  if (e.keyCode == 39) RIGHT = false;
-  if (e.keyCode == 38) UP = false;
-  if (e.keyCode == 40) DOWN = false;
-  if (e.keyCode == 32) {
-    keyAllowed[e.which] = true;
-  } else if (e.keyCode == 13) {
-    START = true;
-    console.log(START);
-  }
+  else if (e.keyCode == 39) RIGHT = false;
+  else if (e.keyCode == 38) UP = false;
+  else if (e.keyCode == 40) DOWN = false;
+  else if (e.keyCode == 32) keyAllowed[e.which] = true;
 };
 
 document.onfocus = (e) => {
@@ -200,7 +200,7 @@ class Enemy {
       this.speed = -this.speed;
     }
     if (this.y > this.dy) {
-      this.dy += 5;
+      this.dy += 2;
     }
     if (this.y === this.dy) {
       this.x -= this.speed;
@@ -336,8 +336,7 @@ class PowerUp {
   }
 }
 
-//Gui------------------------------------------------------
-
+//HUD------------------------------------------------------
 class Game {
   constructor() {
     this.x = 60;
@@ -357,17 +356,17 @@ class Game {
       case 2:
         c.drawImage(healthIcon, this.x - 20, this.y, 20, 20);
         c.drawImage(healthIcon, this.x - 20 + 25, this.y, 20, 20);
+        if (PLAYER_STATE.shield) {
+          c.drawImage(shieldIcon, this.x - 20 + 50, this.y, 20, 20);
+        }
         break;
       case 1:
         c.drawImage(healthIcon, this.x - 20, this.y, 20, 20);
+        if (PLAYER_STATE.shield) {
+          c.drawImage(shieldIcon, this.x - 20 + 25, this.y, 20, 20);
+        }
         break;
     }
-  }
-  level() {
-    c.font = "20px Roboto";
-    c.textAlign = "center";
-    c.fillStyle = "white";
-    c.fillText(`Level: ${LEVEL - 1}`, canvas.width / 2, this.y + 15);
   }
   score() {
     c.beginPath();
@@ -444,27 +443,10 @@ class Game {
       }
     }
   }
-
-  gameover(text) {
-    c.clearRect(0, 0, innerWidth, innerHeight);
-
-    c.font = `100px Roboto`;
-    c.textAlign = "center";
-    c.fillStyle = "white";
-    c.fillText(text, canvas.width / 2, canvas.height / 2);
-    c.font = "45px Roboto";
-    c.textAlign = "center";
-    c.fillStyle = "white";
-    c.fillText(`Score: ${SCORE}`, canvas.width / 2, canvas.height / 2 + 75);
-    var para = document.createElement("p");
-    var node = document.createTextNode("This is new.");
-    para.appendChild(node);
-    canvas.appendChild(para);
-  }
 }
 const game = new Game();
 
-//LevelChanging------------------------------------------------------
+//Level changing------------------------------------------------------
 const changeLevel = () => {
   if (ENEMIES_ARR.length === 0 && LEVEL === 1) {
     lvlOne.forEach((lvl) => {
@@ -575,17 +557,21 @@ const changeLevel = () => {
       METEORS_ARR.push(new Meteor(x, y, size));
     }
     LEVEL++;
+  } else if (METEORS_ARR.length === 0 && LEVEL === 11) {
+    LEVEL = false;
   }
 };
 
-//Cooldown
+//Cooldown on shooting and powerups------------------------------------------------------
 setInterval(() => {
-  if (!POWERUP_COOLDOWN) {
-    POWERUP_COOLDOWN = Math.random() <= 0.8;
-  } else {
-    POWERUP_ARR.push(new PowerUp());
+  if (START) {
+    if (!POWERUP_COOLDOWN) {
+      POWERUP_COOLDOWN = Math.random() <= 0.1;
+    } else {
+      POWERUP_ARR.push(new PowerUp());
+    }
   }
-}, 2000);
+}, 5000);
 
 setInterval(() => {
   COOLDOWN = true;
@@ -596,15 +582,32 @@ setInterval(() => {
   }
 }, 500);
 
+//Cooldown on press enter------------------------------------------------------
+setInterval(() => {
+  document.querySelector("#enter").style.display = "none";
+  if (!START) {
+    setTimeout(() => {
+      document.querySelector("#enter").style.display = "block";
+    }, 500);
+  }
+}, 1000);
+
+setInterval(() => {
+  document.querySelector("#restart").style.display = "none";
+  if ((!LEVEL && METEORS_ARR.length === 0) || HEALTH === 0) {
+    setTimeout(() => {
+      document.querySelector("#restart").style.display = "block";
+    }, 500);
+  }
+}, 1000);
+
 //Animate------------------------------------------------------
 function animateGame() {
-  if (HEALTH > 0) {
+  if (HEALTH > 0 && LEVEL > 0) {
     requestAnimationFrame(animateGame);
-    console.log(START);
     c.clearRect(0, 0, innerWidth, innerHeight);
     game.health();
     game.score();
-    game.level();
     player.update();
     player.shoot();
     POWERUP_ARR.forEach((e) => {
@@ -617,13 +620,24 @@ function animateGame() {
     METEORS_ARR.forEach((e) => {
       e.update();
     });
-    if (LEVEL > 10 && METEORS_ARR.length === 0) {
-      game.gameover("You Won");
-    }
-  } else if (HEALTH === 0) {
-    game.gameover("You Died");
+  } else if (HEALTH === 0 || (!LEVEL && METEORS_ARR.length === 0)) {
+    c.clearRect(0, 0, innerWidth, innerHeight);
+    document.querySelector("#game-over").style.display = "block";
+    document.querySelector("#level").style.display = "none";
+    document
+      .querySelector("#score")
+      .appendChild(document.createTextNode(`score: ${SCORE}`));
   }
   changeLevel();
 }
 
-animateGame();
+//Start display------------------------------------------------------
+const startGame = () => {
+  document.querySelector("#game-start").style.display = "none";
+  animateGame();
+  START = true;
+  document.querySelector("#level").style.display = "block";
+  document
+    .querySelector("#level")
+    .appendChild(document.createTextNode(`Level ${LEVEL - 1}`));
+};

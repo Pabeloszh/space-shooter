@@ -4,10 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <title>Space Shooter</title>
 </head>
 <body>
     <div class="container">
+        <p id="level"></p>
+        <div id="game-start">
+            <p id="title">Space Shooter</p>
+            <p id="enter">press enter</p>
+        </div>
+        <div id="game-over">
+            <p id="title">Game Over</p>
+            <p id="score"></p>
+            <p id="restart">press enter to restart</p>
+        </div>
         <canvas width="800" height="600"> 
         </canvas>
     </div>
