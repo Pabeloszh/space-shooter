@@ -368,6 +368,12 @@ class Game {
         break;
     }
   }
+  level() {
+    c.font = "20px Roboto";
+    c.textAlign = "center";
+    c.fillStyle = "white";
+    c.fillText(`Level: ${LEVEL - 1}`, canvas.width / 2, this.y + 15);
+  }
   score() {
     c.beginPath();
     c.drawImage(numeral0, canvas.width - this.x, this.y, 20, 20);
@@ -607,6 +613,7 @@ function animateGame() {
     requestAnimationFrame(animateGame);
     c.clearRect(0, 0, innerWidth, innerHeight);
     game.health();
+    game.level();
     game.score();
     player.update();
     player.shoot();
@@ -623,11 +630,11 @@ function animateGame() {
   } else if (HEALTH === 0 || (!LEVEL && METEORS_ARR.length === 0)) {
     c.clearRect(0, 0, innerWidth, innerHeight);
     document.querySelector("#game-over").style.display = "block";
-    document.querySelector("#level").style.display = "none";
     document
       .querySelector("#score")
       .appendChild(document.createTextNode(`score: ${SCORE}`));
   }
+
   changeLevel();
 }
 
@@ -636,8 +643,4 @@ const startGame = () => {
   document.querySelector("#game-start").style.display = "none";
   animateGame();
   START = true;
-  document.querySelector("#level").style.display = "block";
-  document
-    .querySelector("#level")
-    .appendChild(document.createTextNode(`Level ${LEVEL - 1}`));
 };
