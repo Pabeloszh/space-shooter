@@ -16,14 +16,6 @@ canvas {
   animation: scroll-background 4s linear infinite;
 }
 
-#level {
-  margin-top: 22.5px;
-  position: absolute;
-  color: white;
-  font-size: 15px;
-  font-family: "Press Start 2P", cursive;
-}
-
 #game-start {
   width: 800px;
   height: 600px;
