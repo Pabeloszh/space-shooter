@@ -27,7 +27,9 @@ let keyAllowed = {};
 
 //ENEMY
 let ENEMIES_ARR = [];
+let ENEMIES_LASER_ARR = [];
 let COOLDOWN = false;
+let ENEMIES_READY = true;
 //METEORS
 let METEORS_ARR = [];
 
@@ -40,7 +42,7 @@ onkeydown = (e) => {
   else if (e.keyCode == 32) {
     if (keyAllowed[e.which] === false) return;
     keyAllowed[e.which] = false;
-    SHOOT = true;
+    SHOOT = ENEMIES_READY ? true : false;
   } else if (e.keyCode == 13 && !START) startGame();
   else if (
     e.keyCode == 13 &&
@@ -201,24 +203,20 @@ class Enemy {
     }
     if (this.y > this.dy) {
       this.dy += 2;
+      ENEMIES_READY = false;
     }
     if (this.y === this.dy) {
       this.x -= this.speed;
+      ENEMIES_READY = true;
     }
     this.randomizeShooting = Math.random() <= 0.8;
     this.draw();
   }
   shoot() {
     if (COOLDOWN && this.randomizeShooting && this.y === this.dy) {
-      const enemyLaser = new EnemyLaser(
-        this.x - 5 + this.size / 2,
-        this.y,
-        10,
-        20
-      );
+      const enemyLaser = new EnemyLaser(this.x - 5 + this.size / 2, this.y, 10);
       this.enemyBullets.push(enemyLaser);
     }
-
     for (var i = this.enemyBullets.length - 1; i >= 0; i--) {
       let enemyBullet = this.enemyBullets[i];
       if (enemyBullet.y > canvas.height) {
@@ -231,11 +229,10 @@ class Enemy {
 
 //EnemyLaser------------------------------------------------------
 class EnemyLaser {
-  constructor(x, y, size, velocity) {
+  constructor(x, y, size) {
     this.x = x;
     this.y = y;
     this.size = size;
-    this.velocity = velocity;
   }
   draw() {
     c.beginPath();
@@ -584,7 +581,7 @@ setInterval(() => {
   if (COOLDOWN) {
     setTimeout(() => {
       COOLDOWN = false;
-    }, 10);
+    }, 15);
   }
 }, 500);
 
