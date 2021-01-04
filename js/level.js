@@ -73,12 +73,12 @@ numeral9.src = "../data/PNG/UI/numeral9.png";
 //Levels------------------------------------------------------
 const lvlOne = [
   {
-    x: 400 - 30 - 100,
+    x: 270,
     y: 80,
     img: enemy1,
   },
   {
-    x: 400 - 30 + 100,
+    x: 470,
     y: 80,
     img: enemy1,
   },
@@ -86,22 +86,22 @@ const lvlOne = [
 
 const lvlThree = [
   {
-    x: 400 - 30,
+    x: 370,
     y: 140,
     img: enemy4,
   },
   {
-    x: 400 - 30,
+    x: 370,
     y: 80,
     img: enemy5,
   },
   {
-    x: 400 - 30 - 100,
+    x: 270,
     y: 80,
     img: enemy3,
   },
   {
-    x: 400 - 30 + 100,
+    x: 470,
     y: 80,
     img: enemy3,
   },
@@ -109,126 +109,126 @@ const lvlThree = [
 
 const lvlFive = [
   {
-    x: 400 - 30 - 100,
+    x: 270,
     y: 140,
     img: enemy5,
   },
   {
-    x: 400 - 30 + 100,
+    x: 470,
     y: 140,
     img: enemy5,
   },
   {
-    x: 400 - 30 - 100,
+    x: 270,
     y: 80,
     img: enemy3,
   },
   {
-    x: 400 - 30 + 100,
+    x: 470,
     y: 80,
     img: enemy3,
   },
   {
-    x: 400 - 30 - 200,
+    x: 170,
     y: 80,
     img: enemy2,
   },
   {
-    x: 400 - 30 + 200,
+    x: 570,
     y: 80,
     img: enemy2,
   },
 ];
 const lvlSeven = [
   {
-    x: 400 - 30,
+    x: 370,
     y: 140,
     img: enemy4,
   },
   {
-    x: 400 - 30 - 100,
+    x: 270,
     y: 140,
     img: enemy5,
   },
   {
-    x: 400 - 30 + 100,
+    x: 470,
     y: 140,
     img: enemy5,
   },
   {
-    x: 400 - 30,
+    x: 370,
     y: 80,
     img: enemy4,
   },
   {
-    x: 400 - 30 - 100,
+    x: 270,
     y: 80,
     img: enemy3,
   },
   {
-    x: 400 - 30 + 100,
+    x: 470,
     y: 80,
     img: enemy3,
   },
   {
-    x: 400 - 30 - 200,
+    x: 170,
     y: 80,
     img: enemy2,
   },
   {
-    x: 400 - 30 + 200,
+    x: 570,
     y: 80,
     img: enemy2,
   },
 ];
 const lvlNine = [
   {
-    x: 400 - 30,
+    x: 370,
     y: 140,
     img: enemy4,
   },
   {
-    x: 400 - 30 - 100,
+    x: 270,
     y: 140,
     img: enemy5,
   },
   {
-    x: 400 - 30 + 100,
+    x: 470,
     y: 140,
     img: enemy5,
   },
   {
-    x: 400 - 30 - 200,
+    x: 570,
     y: 140,
     img: enemy1,
   },
   {
-    x: 400 - 30 + 200,
+    x: 170,
     y: 140,
     img: enemy1,
   },
   {
-    x: 400 - 30,
+    x: 370,
     y: 80,
     img: enemy4,
   },
   {
-    x: 400 - 30 - 100,
+    x: 270,
     y: 80,
     img: enemy2,
   },
   {
-    x: 400 - 30 + 100,
+    x: 470,
     y: 80,
     img: enemy2,
   },
   {
-    x: 400 - 30 - 200,
+    x: 170,
     y: 80,
     img: enemy1,
   },
   {
-    x: 400 - 30 + 200,
+    x: 570,
     y: 80,
     img: enemy1,
   },
