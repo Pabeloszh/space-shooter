@@ -12,7 +12,7 @@
 }
 
 canvas {
-  background-image: url("./data/Backgrounds/black.png");
+  background-image: url("./img/Backgrounds/black.png");
   animation: scroll-background 4s linear infinite;
 }
 
